@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-
 import re
 from multiprocessing import Value
 import sqlite3
@@ -11,6 +9,12 @@ import os
 import time
 import subprocess
 from pathlib import Path
+
+# ===== STEP 1: SET ENVIRONMENT VARIABLE FIRST =====
+os.environ['MOZ_REMOTE_SETTINGS_DEVTOOLS'] = '1'
+# ==================================================
+
+
 from typing import Union
 from bannerclick.config import *
 from bannerclick.utility.runUtils import *
@@ -379,8 +383,8 @@ try:
                             #     choice=1
                             # )
                         else:
-                            manager.logger.error(
-                                f"rejecting the banner {site}, {index} ")
+                            # manager.logger.error(
+                            #     f"rejecting the banner {site}, {index} ")
                             goal = "stateful_phase"
                             command_sequence = CommandSequence(
                                 url=site,

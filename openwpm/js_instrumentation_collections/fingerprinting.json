@@ -1,38 +1,234 @@
 [
-    "ScriptProcessorNode",
-    "GainNode",
-    "AnalyserNode",
-    "OscillatorNode",
-    "OfflineAudioContext",
-    "AudioContext",
-    "RTCPeerConnection",
-    "HTMLCanvasElement",
-    "Storage",
-    "window.navigator",
-    {"CanvasRenderingContext2D": {
-        "excludedProperties": [
-            "quadraticCurveTo",
-            "lineTo",
-            "transform",
-            "globalAlpha",
-            "moveTo",
-            "drawImage",
-            "setTransform",
-            "clearRect",
-            "closePath",
-            "beginPath",
-            "canvas",
-            "translate"
-        ]
-    }},
-    {"window": {
-        "propertiesToInstrument": ["name", "localStorage", "sessionStorage"]
-    }},
-    {"window.document": {
-        "propertiesToInstrument": ["cookie", "referrer"],
-        "logCallStack": true
-    }},
-    {"window.screen": {
-        "propertiesToInstrument": ["pixelDepth", "colorDepth"]
-    }}
+  "ScriptProcessorNode",
+  "GainNode",
+  "AnalyserNode",
+  "OscillatorNode",
+  "AudioBuffer",
+  "AudioWorkletNode",
+  "OfflineAudioContext",
+  "AudioContext",
+  "RTCPeerConnection",
+  "RTCPeerConnectionIceEvent",
+  "HTMLCanvasElement",
+  {
+    "CanvasRenderingContext2D": {
+      "propertiesToInstrument": ["getImageData", "measureText", "isPointInPath"],
+      "excludedProperties": [
+        "quadraticCurveTo",
+        "lineTo",
+        "transform",
+        "globalAlpha",
+        "moveTo",
+        "drawImage",
+        "setTransform",
+        "clearRect",
+        "closePath",
+        "beginPath",
+        "canvas",
+        "translate"
+      ]
+    }
+  },
+  {
+    "Navigator": {
+      "propertiesToInstrument": [
+        "userAgent",
+        "language",
+        "languages",
+        "platform",
+        "connection",
+        "cookieEnabled",
+        "maxTouchPoints",
+        "plugins",
+        "mimeTypes",
+        "doNotTrack",
+        "vendor",
+        "product",
+        "appCodeName",
+        "appName",
+        "appVersion",
+        "hardwareConcurrency",
+        "deviceMemory",
+        "mediaDevices",
+        "permissions",
+        "presentation",
+        "keyboard",
+        "storage",
+        "mediaCapabilities",
+        "webdriver",
+        "getBattery",
+        "javaEnabled",
+        "requestMediaKeySystemAccess",
+        "getGamepads",
+        "onLine"
+      ]
+    }
+  },
+  {
+    "WebGLRenderingContext": {
+      "propertiesToInstrument": [
+        "getParameter",
+        "getExtension",
+        "getShaderPrecisionFormat",
+        "getContextAttributes",
+        "getSupportedExtensions",
+        "readPixels"
+      ]
+    }
+  },
+  {
+    "WebGL2RenderingContext": {
+      "propertiesToInstrument": [
+        "getParameter",
+        "getExtension",
+        "getShaderPrecisionFormat",
+        "getContextAttributes",
+        "getSupportedExtensions",
+        "readPixels"
+      ]
+    }
+  },
+  {
+    "window.screen": {
+      "propertiesToInstrument": [
+        "width",
+        "height",
+        "availHeight",
+        "availWidth",
+        "availTop",
+        "availLeft",
+        "colorDepth",
+        "pixelDepth",
+        "orientation"
+      ]
+    }
+  },
+  {
+    "window": {
+      "propertiesToInstrument": [
+        "name",
+        "localStorage",
+        "sessionStorage",
+        "innerWidth",
+        "innerHeight",
+        "outerWidth",
+        "outerHeight",
+        "screenX",
+        "screenY",
+        "screenLeft",
+        "screenTop",
+        "openDatabase",
+        "devicePixelRatio",
+        "indexedDB",
+        "matchMedia",
+        "performance",
+        "screen"
+      ]
+    }
+  },
+  {
+    "Date": {
+      "propertiesToInstrument": ["getTime", "getTimezoneOffset"]
+    }
+  },
+  {
+    "Document": {
+      "propertiesToInstrument": ["cookie"],
+      "nonExistingPropertiesToInstrument": ["interestCohort"]
+    }
+  },
+  {
+    "PerformanceTiming": {
+      "propertiesToInstrument": ["navigationStart"]
+    }
+  },
+  {
+    "Performance": {
+      "propertiesToInstrument": []
+    }
+  },
+  {
+    "Element": {
+      "propertiesToInstrument": ["getClientRects"]
+    }
+  },
+  {
+    "BarProp": {
+      "propertiesToInstrument": ["visible"]
+    }
+  },
+  {
+    "HTMLMediaElement": {
+      "propertiesToInstrument": ["canPlayType"]
+    }
+  },
+  {
+    "Event": {
+      "propertiesToInstrument": ["timeStamp"]
+    }
+  },
+  {
+    "speechSynthesis": {
+      "propertiesToInstrument": ["getVoices"]
+    }
+  },
+  {
+    "URL": {
+      "propertiesToInstrument": ["createObjectURL"]
+    }
+  },
+  {
+    "SharedWorker": {
+      "propertiesToInstrument": ["constructor"]
+    }
+  },
+  {
+    "MediaSource": {
+      "propertiesToInstrument": ["isTypeSupported"]
+    }
+  },
+  {
+    "MediaDevices": {
+      "propertiesToInstrument": ["enumerateDevices"]
+    }
+  },
+  {
+    "Notification": {
+      "propertiesToInstrument": ["permission"]
+    }
+  },
+  {
+    "DeviceMotionEvent": {
+      "propertiesToInstrument": [
+        "accelerationIncludingGravity",
+        "rotationRate",
+        "acceleration"
+      ]
+    }
+  },
+  {
+    "DeviceOrientationEvent": {
+      "propertiesToInstrument": ["beta", "gamma", "alpha", "absolute"]
+    }
+  },
+  {
+    "BroadcastChannel": {
+      "propertiesToInstrument": ["constructor"]
+    }
+  },
+  {
+    "window.document.fonts": {
+      "propertiesToInstrument": ["check"]
+    }
+  },
+  {
+    "Animation": {
+      "propertiesToInstrument": ["currentTime", "startTime"]
+    }
+  },
+  {
+    "KeyboardEvent": {
+      "propertiesToInstrument": ["code", "keyCode"]
+    }
+  }
 ]

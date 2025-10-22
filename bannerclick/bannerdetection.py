@@ -5,17 +5,13 @@ import openai
 import base64
 import sqlite3
 import threading
-
 from PIL import Image
-
-
 import traceback
 import sys
 from selenium.webdriver.support import expected_conditions as EC
-
-
-
-
+import bannerclick.config as config
+import logging
+import csv
 def MyExceptionLogger(err, file):
     # return
     traceback_details = traceback.format_exc()
@@ -23,7 +19,6 @@ def MyExceptionLogger(err, file):
     exc_type, exc_value, exc_traceback = sys.exc_info()
     print(f"Exception type: {exc_type}, Value: {exc_value}", file=file)
     traceback.print_tb(exc_traceback, file=file)
-    
 
 try:
     from .utility.utilityMethods import *
@@ -791,10 +786,13 @@ def find_shadowdom_banners(driver):
 
     return banners
 
-
 def detect_banners(data):  # return banners of the current running url
     global driver, this_url, this_domain, this_status, visit_db, this_lang, this_index
+    config.driver = driver
     banners = []
+    banner_info = []
+    csv_file ='banner_data.csv' 
+
     inc_counter()
     try:
         if ZOOMING:
@@ -806,14 +804,19 @@ def detect_banners(data):  # return banners of the current running url
         this_domain = data.domain
         this_lang = None
         time.sleep(2.5)
+        start_time = datetime.now()
         banners = find_cookie_banners()
+        finish_time = datetime.now()
+        completion_time = finish_time - start_time
 
-        # with open(banners_log_file, 'a+') as f:
-        #     init_str = this_domain + " banner detection finished within: " + str(
-        #         completion_time.microseconds)
-        #     print(init_str, file=f)
+        with open(banners_log_file, 'a+') as f:
+            init_str = this_domain + " banner detection finished within: " + str(
+                completion_time.microseconds)
+            print(init_str, file=f)
 
         this_lang = page_lang(driver)
+        config.this_lang = this_lang
+        logging.getLogger('openwpm').info(f"lang_on_bd: {this_lang}")
         data.lang = this_lang
         if ATTEMPTS:
             for att in range(ATTEMPTS):
@@ -832,6 +835,42 @@ def detect_banners(data):  # return banners of the current running url
                 banners = find_cookie_banners(translate=True)
                 this_status = 3
                 data.status = this_status
+        # Extract banner information
+#------------------------------------------------------------------------------------        
+
+        # for banner in banners:   
+        #     banner_item = {
+        #         "domain": this_domain,
+        #         "has_banner": "Yes",
+        #         "banner_text": "",
+        #         "buttons": [],
+        #         "links": []
+        #     } 
+            # banner_info.append(banner_item)
+        # if not banner_info:
+        #     banner_info.append(banner_item)
+        #     
+        # csv_headers = ["domain", "has_banner", "banner_text", "buttons", "links"]
+        # Write to CSV file
+        # if not banners:
+        #     banner_info.append({
+        #         "domain": this_domain,
+        #         "has_banner": "No",
+        #         "banner_text": "",
+        #         "buttons": [],
+        #         "links": []
+        #     })
+#         with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
+#             writer = csv.DictWriter(file, fieldnames=csv_headers)
+#             
+#             # Write header only if file is empty
+#             if file.tell() == 0:
+#                 writer.writeheader()
+# 
+#             writer.writerows(banner_info)
+        logging.getLogger("openwpm").info(f"No. of Banners in 1st layer: {len(banners)}")
+
+#------------------------------------------------------------------------------------
     except Exception as ex:
         with open(log_file, 'a+') as f:
             print("failed to continue detecting banner for domain: " +
@@ -839,7 +878,109 @@ def detect_banners(data):  # return banners of the current running url
             # MyExceptionLogger(err=ex, file=f)
         this_status = -1
         data.status = this_status
+
+    
     return banners
+
+
+def Second_layer_detect_banners(data):  # return banners of the current running url
+    global driver, this_url, this_domain, this_status, visit_db, this_lang, this_index
+    config.driver = driver
+    banners = []
+    banner_info = []
+    csv_file ='second_layer_banner_data.csv' 
+
+    inc_counter()
+    try:
+        if ZOOMING:
+            zoom_out(3)
+        if not data.url:
+            return banners
+        this_index = data.index
+        this_url = data.url
+        this_domain = data.domain
+        this_lang = None
+        time.sleep(2.5)
+        start_time = datetime.now()
+        banners = find_cookie_banners()
+        finish_time = datetime.now()
+        completion_time = finish_time - start_time
+
+        with open(banners_log_file, 'a+') as f:
+            init_str = this_domain + " banner detection finished within: " + str(
+                completion_time.microseconds)
+            print(init_str, file=f)
+
+        this_lang = page_lang(driver)
+        config.this_lang = this_lang
+        # logging.getLogger('openwpm').info(f"lang_on_bd: {this_lang}")
+        data.lang = this_lang
+        if ATTEMPTS:
+            for att in range(ATTEMPTS):
+                if banners:
+                    break
+                time.sleep(ATTEMPT_STEP)
+                if not banners:
+                    banners = find_cookie_banners()
+                else:
+                    return banners
+                data.ttw = (att + 1) * ATTEMPT_STEP
+        if not banners and TRANSLATION:
+            # if no banner is found and the language of site is not english then translate the page and check again
+            if "en" not in this_lang and is_in_langlist(this_lang):
+                translate_page(driver)
+                banners = find_cookie_banners(translate=True)
+                this_status = 3
+                data.status = this_status
+        # Extract banner information
+#------------------------------------------------------------------------------------        
+
+#         for banner in banners:   
+#             banner_item = {
+#                 "domain": this_domain,
+#                 "has_banner": "Yes",
+#                 "banner_text": "",
+#                 "buttons": [],
+#                 "links": []
+#             } 
+#             banner_info.append(banner_item)
+#         if not banner_info:
+#             banner_info.append(banner_item)
+#             
+#         csv_headers = ["domain", "has_banner", "banner_text", "buttons", "links"]
+#         # Write to CSV file
+#         if not banners:
+#             banner_info.append({
+#                 "domain": this_domain,
+#                 "has_banner": "No",
+#                 "banner_text": "",
+#                 "buttons": [],
+#                 "links": []
+#             })
+#         with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
+#             writer = csv.DictWriter(file, fieldnames=csv_headers)
+#             
+#             # Write header only if file is empty
+#             if file.tell() == 0:
+#                 writer.writeheader()
+# 
+#             writer.writerows(banner_info)
+#         logging.getLogger("openwpm").info(f"No. of Banners in 2nd layer: {len(banners)}")
+# 
+# 
+#------------------------------------------------------------------------------------
+    except Exception as ex:
+        with open(log_file, 'a+') as f:
+            print("failed to continue detecting banner for domain: " +
+                  data.domain + " " + ex.__str__(), file=f)
+            # MyExceptionLogger(err=ex, file=f)
+        this_status = -1
+        data.status = this_status
+
+    
+    return banners
+
+
 
 
 # first opens the domain then detects banners of that domain

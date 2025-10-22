@@ -1,5 +1,4 @@
 import re
-
 from ..config import *
 import sqlite3
 import os
@@ -190,6 +189,28 @@ def get_browser_params(num_browsers, headless=True, LOAD_PRO = False, image_para
         browser_param.callstack_instrument = False
         # Record DNS resolution
         browser_param.dns_instrument = DNS_INSTRUMENT
+        browser_param.prefs = {
+            # Kill remote settings errors
+            "services.settings.verify_signature": False,
+            "services.settings.server": "",
+            
+            # Disable failing collections
+            "services.settings.main.query-stripping.enabled": False,
+            "services.settings.main.fingerprinting-protection-overrides.enabled": False,
+            "services.settings.main.quicksuggest.enabled": False,
+            "services.settings.security-state.cert-revocations.enabled": False,
+            "services.settings.security-state.intermediates.enabled": False,
+            "services.settings.security-state.onecrl.enabled": False,
+            
+            # Disable updates
+            "app.update.enabled": False,
+            "browser.safebrowsing.downloads.remote.enabled": False,
+            
+            # Optional: Enable software WebGL for fingerprinting detection
+            "webgl.force-enabled": True,
+            "webgl.disable-fail-if-major-performance-caveat": True,
+            "layers.acceleration.disabled": True,
+        }
         if MOBILE_AGENT:
             browser_param.prefs[
                 "general.useragent.override"

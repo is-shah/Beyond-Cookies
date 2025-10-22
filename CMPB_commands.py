@@ -5,25 +5,28 @@ import os
 import threading
 import time
 from datetime import datetime
-
+from bannerclick.config import * 
+import bannerclick.config as config 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
 from openwpm.commands.types import BaseCommand
 from openwpm.commands.browser_commands import tab_restart_browser, close_other_windows, bot_mitigation
 from openwpm.config import BrowserParams, ManagerParams
 from openwpm.socket_interface import ClientSocket
 from openwpm.storage.storage_controller import DataSocket
 from openwpm.storage.storage_providers import TableName
-
 import bannerclick.bannerdetection as bc
 import bannerclick.cmpdetection as cd
-
+import bannerclick.config as config 
 from bannerclick.config import log_file, MOBILE_AGENT, TEST_RUN, RUN_SUFFIX
 from bannerclick.bannerdetection import MyExceptionLogger
+from detect_links import filter_links , link_segregation
+from selenium.common.exceptions import ElementNotInteractableException, StaleElementReferenceException
+
+
 
 
 def init(headless, input_file, num_browsers, num_repetitions):
@@ -187,6 +190,98 @@ class CMPBCommand(BaseCommand):
     def save_into_incomplete_visits(self):
         pass
 
+    def workflow(self, Data, option):
+        # Option 1: Using if-elif (works in all Python versions)
+        if option == 1:
+            bc.interact_with_banners(Data, choice=1)
+            time.sleep(10)
+        elif option == 2:
+            bc.interact_with_banners(Data, choice=2)
+            time.sleep(10)
+        elif option == 3:
+            if config.SETTINGS_BUTTON_AVAILABLE:
+                bc.interact_with_banners(Data, choice=3)
+                logging.getLogger('openwpm').info("settings button clicked")
+                WebDriverWait(config.driver, 3).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            
+            # Make sure 'banners' is defined somewhere
+            for banner_item in banners:  # banners needs to be defined
+                bc.remove_banner(config.driver, banner_item)
+            
+            second_layer_banners = bc.Second_layer_detect_banner(Data)
+            logging.getLogger("openwpm").info("Screenshot for 2nd layer is started")  # Fixed typo
+            bc.take_banner_sc(second_layer_banners, Data)
+            config.SETTINGS_BUTTON_AVAILABLE = False
+            flag = 1
+            self.workflow(Data, flag)
+        
+        # Fixed indentation and line break
+        for key, val in Data.btn_status.items():
+            logging.getLogger("openwpm").info(f"{key}:{val}")
+
+
+
+    def User_Interaction(self, links):
+        for link in links:
+            link_text = link['text']
+            href_val = link['href']
+            try:
+                # Find all anchors fresh each time (avoids stale references after navigation)
+                all_anchors = config.driver.find_elements(By.TAG_NAME, "a")
+                for element in all_anchors:
+                    el_text = element.text.strip().lower()
+                    el_href = (element.get_attribute("href") or "").strip().lower()
+                    
+                    # Match by both text and href (safer than text alone)
+                    if el_text == link_text and el_href == href_val:
+                        # Scroll into view like a real user would
+                        config.driver.execute_script(
+                            "arguments[0].scrollIntoView({block: 'center'});", 
+                            element
+                        )
+                        # Click
+                        element.click()
+                        logging.getLogger("openwpm").info(
+                            f"Clicked: {link} at {datetime.now()}"
+                        )
+                        
+                        # Wait for the new page to fully load
+                        WebDriverWait(config.driver, 10).until(
+                            lambda d: d.execute_script("return document.readyState") == "complete"
+                        )
+                        
+                        # Navigate back
+                        config.driver.back()
+                        break  # stop after first match
+                        
+            except ElementNotInteractableException:
+                logging.getLogger("openwpm").warning(f"Not interactable: {link}, skipping")
+            except StaleElementReferenceException:
+                logging.getLogger("openwpm").warning(f"Stale element: {link}, skipping")
+            except Exception as e:
+                logging.getLogger("openwpm").error(f"Unexpected error with {link}: {e}")
+            
+
+
+    def Inner_Pages(self):
+        links = []
+        anchor_tags = config.driver.find_elements(By.TAG_NAME, "a")
+        
+        for ele in anchor_tags:
+            href = ele.get_attribute("href")
+            # handles all possibilities - No href, CSS Display != None
+            if href and ele.is_displayed() and ele.is_enabled():
+                link_info = {
+                    "text": ele.text.strip().lower(),
+                    "href": href.strip().lower(),
+                }
+                links.append(link_info)
+        
+        # Filter the unwanted data
+        links, zone_out_links = filter_links(links)
+        valid_links, uneven_schema_links = link_segregation(links)
+        return valid_links
+    
     def execute(
         self,
         webdriver: Firefox,
@@ -265,38 +360,35 @@ class CMPBCommand(BaseCommand):
                 except:
                     pass
 
-                # # Run banner detection and interaction
                 else:
 
                     if not error_flag:
                         banners = []
+                        # time.sleep(30)
                         if self.choice:
                             banners = bc.run_banner_detection(Data)
+                            logging.getLogger("openwpm").info(f"Banner Detection Process Done at {datetime.now()}")
                             bc.take_page_sc(Data)
-                        if banners or RUN_SUFFIX in self.goal or self.choice==0 or bc.JS_RUN:
+                        
+                        if banners :
                             Data.banners = banners
                             Data.banners_data = bc.extract_banners_data(banners)
 
-                            main_sleep = 30
-                            # main_sleep = 15
-                            last_sleep = 10
-                            last_sleep = 60
-                            if bc.INTRACTABLE and "stateless" in self.goal and RUN_SUFFIX not in self.goal and not bc.JS_RUN:
-                                Data.finish_time = bc.halt_for_sleep(Data.start_time, main_sleep)
-                            if self.choice:
-                                bc.interact_with_banners(Data, self.choice)
-                            if bc.INTRACTABLE and ("stateful" in self.goal or RUN_SUFFIX in self.goal):
-                                Data.finish_time = bc.halt_for_sleep(Data.start_time, main_sleep)
-                            if bc.INTRACTABLE and ("stateless" in self.goal and RUN_SUFFIX not in self.goal):
-                                Data.finish_time = bc.halt_for_sleep(datetime.now(), last_sleep)
+                            # workflow 
+                            logging.getLogger("openwpm").info("--------------######------------------")
+                            self.workflow(Data,option=1)
 
-                        if bc.JS_RUN or not bc.INTRACTABLE and (bc.WAITANYWAY or self.choice and banners):
-                            Data.finish_time = bc.halt_for_sleep(Data.start_time, Data.sleep)
-                        try:
-                            cd.set_webdriver(webdriver)
-                            Data.CMP = cd.run_cmp_detection()
-                        except:
-                            pass
+                            time.sleep(10)
+                            config.driver.refresh()
+                            logging.getLogger("openwpm").info("Page Refresh Done")
+
+
+                        Inner_Pages_links = self.Inner_Pages()
+
+                        if Inner_Pages_links :
+                            logging.getLogger("openwpm").info(f"Inner Page Intercation Started at {datetime.now()}")
+                            self.User_Interaction(Inner_Pages_links)
+
                     else:
                         bc.take_page_sc(Data)
                     Data.sql_addr = manager_params.storage_controller_address
