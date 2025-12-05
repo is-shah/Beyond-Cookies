@@ -3,12 +3,34 @@ from ..config import *
 import sqlite3
 import os
 import time
+from typing import List, Tuple, Dict, Optional, Union
 import subprocess
 import shutil
 from pathlib import Path
 from openwpm.config import BrowserParams, ManagerParams
 from openwpm.command_sequence import CommandSequence, DumpProfileCommand
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.common.by import By
 
+from openwpm.commands.utils.webdriver_utils import (
+    is_displayed,
+    scroll_down,
+    wait_until_loaded,
+)
+from urllib import parse as urlparse
+import requests
+from selenium.webdriver import Firefox
+from .shared_utils import repeat, read_txt_file, url_to_uniform_domain
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.common.by import By
+import logging
+import random
+GENERAL_SELECTORS_URL = "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_general_hide.txt"
+SPECIFIC_SELECTORS_URL = "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_specific_hide.txt"
+SELECTORS_EXCEPTIONS_URL = "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_allowlist_general_hide.txt"
+BANNED_CHARACTERS = {"!", "[", "@", "|", "/"}
+
+from pathlib import Path
 def make_url(domain: str, mode=URL_MODE):
     domain = domain.strip("\n")
     if "https://" in domain or "http://" in domain:
@@ -21,6 +43,65 @@ def make_url(domain: str, mode=URL_MODE):
         else:
             url = ""
     return url
+
+def scroll_to_bottom(webdriver: Firefox) -> None:
+    try:
+        webdriver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    except WebDriverException:
+        pass
+
+
+
+
+def write_to_file(
+    s: Union[str, bytes], save_path: Union[Path, str], save_path_suffix: str = ""
+) -> None:
+    if isinstance(s, str):
+        s = s.encode("utf8")
+    with open(f"{save_path}{save_path_suffix}", "wb") as f:
+        f.write(s)
+        f.write(b"\n")
+
+
+def parse_general_selectors(raw_selectors: List[str]) -> List[str]:
+    selectors = []
+    for line in raw_selectors:
+        if line[0] in BANNED_CHARACTERS:
+            continue
+        if line[0:2] == "##":
+            selector = line[2:]
+            selectors.append(selector.strip())
+    return selectors
+
+
+def get_selectors() -> Tuple[List[str], ...]:
+    selectors = []
+    for desc, url in zip(
+        ["general_selectors", "specific_selectors", "selectors_exceptions"],
+        [GENERAL_SELECTORS_URL, SPECIFIC_SELECTORS_URL, SELECTORS_EXCEPTIONS_URL],
+    ):
+        filename = Path(os.path.join(os.path.dirname(__file__),"selectors",f"{desc}.txt"))
+        if filename.is_file():
+            print("Loading selectors from cache ..")
+            tmp_selectors = read_txt_file(filename)
+        else:
+            print("Downloading selectors ..")
+            filename.parent.mkdir(exist_ok=True, parents=True)
+            tmp_selectors = requests.get(url).text.splitlines()
+            write_to_file("\n".join(tmp_selectors), filename)
+        selectors.append(tmp_selectors)
+    selectors[0] = parse_general_selectors(selectors[0])
+    return tuple(selectors)
+
+@repeat(raise_exception_if_fails=False, sleep=3)
+def find_elements_by_selectors(
+    selectors: List[str], webdriver: Firefox
+) -> Tuple[List[WebElement], List[str]]:
+    return webdriver.execute_script(
+        open(os.path.join(os.path.dirname(__file__), "find_elements_by_selector.js")).read(),
+        selectors,
+    )
+
 
 
 def file_to_list(path):
@@ -36,6 +117,116 @@ def file_to_list(path):
             break
         domains.append(make_url(domain))
     return domains
+
+
+def get_intra_links(webdriver: Firefox, url: str) -> List[WebElement]:
+    ps1 = url_to_uniform_domain(url)
+    links = list()
+    for elem in webdriver.find_elements(By.TAG_NAME, "a"):
+        try:
+            href = elem.get_attribute("href")
+        except StaleElementReferenceException:
+            continue
+        if href is None:
+            continue
+        full_href = urlparse.urljoin(url, href)
+        if not full_href.startswith("http"):
+            continue
+        if url_to_uniform_domain(full_href) == ps1:
+            links.append(elem)
+    return links
+
+def browse(
+    website: str,
+    webdriver: Firefox,
+    num_links: int,
+    sleep: int,
+    seed: int,
+) -> None:
+    links = [
+        x
+        for x in get_intra_links(webdriver, website)
+        if is_displayed(x) is True
+    ]
+    if not links:
+        return
+    links_ids = get_selector_from_element(links, webdriver)
+    random.seed(seed)
+    for i in range(num_links):
+        r = int(random.random() * len(links))
+
+        try:
+
+            link = (
+                find_element_by_selector(links_ids[r], webdriver) if i > 0 else links[r]
+            )
+            if link is None:
+                continue
+            click(link, webdriver)
+            wait_until_loaded(webdriver, 4)
+            time.sleep(0.5)
+            scroll_to_bottom(webdriver)
+            wait_until_loaded(webdriver, 3)
+            time.sleep(0.5)
+            webdriver.back()
+        except Exception:
+            pass
+
+def url_to_uniform_domain(url: str) -> str:
+    """Takes a URL or a domain string and transforms it into a uniform format.
+    Examples: {"www.example.com", "https://example.com/", ".example.com"} --> "example.com"
+    :param url: URL to clean and bring into uniform format
+    """
+    new_url = url.strip()
+    new_url = re.sub("^http(s)?://", "", new_url)
+    new_url = re.sub("^www([0-9])?", "", new_url)
+    new_url = re.sub("^\\.", "", new_url)
+    new_url = re.sub("/.*", "", new_url)
+    return new_url
+
+
+@repeat()
+def click(element: WebElement, webdriver: Firefox, sleep: int = 3) -> None:
+    webdriver.execute_script(
+        "arguments[0].scrollIntoView(true);arguments[0].click();", element
+    )
+    time.sleep(sleep)
+
+@repeat()
+def get_selector_from_element(
+    elements: Union[WebElement, List[WebElement]],
+    webdriver: Firefox,
+    keep_text_elements_only: bool = False,
+    return_matched_elements: bool = False,
+) -> Optional[Union[List[str], str, Tuple[List[str], List[WebElement]]]]:
+    unique_element = False
+    if isinstance(elements, WebElement):
+        elements = [elements]
+        unique_element = True
+    selectors, matched_elements = webdriver.execute_script(
+        open(os.path.join(os.path.dirname(__file__), "optimal_select.js")).read(),
+        elements,
+        keep_text_elements_only,
+    )
+    if unique_element:
+        if len(selectors) > 0:
+            return selectors[0]
+        raise RuntimeError("Unable to assign selector to element.")
+    else:
+        if return_matched_elements:
+            return selectors, matched_elements
+        return selectors
+
+def find_element_by_selector(
+    selector: Optional[str],
+    webdriver: Firefox,
+) -> Optional[WebElement]:
+    if selector is None:
+        return None
+    elements, _ = find_elements_by_selectors([selector], webdriver)
+    if len(elements) == 0:
+        return None
+    return elements[0]
 
 
 def get_domains_from_file(target_file_name):
@@ -193,7 +384,7 @@ def get_browser_params(num_browsers, headless=True, LOAD_PRO = False, image_para
             # Kill remote settings errors
             "services.settings.verify_signature": False,
             "services.settings.server": "",
-            
+
             # Disable failing collections
             "services.settings.main.query-stripping.enabled": False,
             "services.settings.main.fingerprinting-protection-overrides.enabled": False,
@@ -201,11 +392,11 @@ def get_browser_params(num_browsers, headless=True, LOAD_PRO = False, image_para
             "services.settings.security-state.cert-revocations.enabled": False,
             "services.settings.security-state.intermediates.enabled": False,
             "services.settings.security-state.onecrl.enabled": False,
-            
+
             # Disable updates
             "app.update.enabled": False,
             "browser.safebrowsing.downloads.remote.enabled": False,
-            
+
             # Optional: Enable software WebGL for fingerprinting detection
             "webgl.force-enabled": True,
             "webgl.disable-fail-if-major-performance-caveat": True,
@@ -223,6 +414,7 @@ def get_browser_params(num_browsers, headless=True, LOAD_PRO = False, image_para
             load_profile(browser_param)
         if browser_params and not browser_params[0].custom_params:
             browser_params[0].custom_params = dict()
+
     return browser_params
 
 

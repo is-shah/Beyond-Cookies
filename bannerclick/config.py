@@ -30,10 +30,10 @@ CMPDETECTION = True
 BANNERINTERACTION = True
 DNSMPI_DETECTION = False
 SUB_DETECTION = True
-SCREENSHOT = False      # take screenshot
+SCREENSHOT = True     # take screenshot
 NOBANNER_SC = True      # store screenshot of websites with no banner in another folder
-SAVE_HTML = False       # save HTML of the banner in "htmls" table
-SAVE_BODY = False       # save HTML of the body in "visits" table
+SAVE_HTML = True       # save HTML of the banner in "htmls" table
+SAVE_BODY = True       # save HTML of the body in "visits" table
 # using chrome as the browser, available just for Banner Detection module (Not for OpenWPM)
 CHROME = False         # use Chrome browser; this was for partitioned cookies measurement
 GET_COOKIES = CHROME
@@ -56,8 +56,8 @@ RETRY_NUMBER = -1        # number of retry for banner detection
 HTTP_INSTRUMENT = True      # enabling recording HTTP requests and responses
 JS_INSTRUMENT = True       # enabling recording JS events
 COOKIE_INSTRUMENT = True    # enabling recording cookies
-NAV_INSTRUMENT = False      # enabling recording navigation events
-DNS_INSTRUMENT = False      # enabling recording navigation events
+NAV_INSTRUMENT = True     # enabling recording navigation events
+DNS_INSTRUMENT = True      # enabling recording navigation events
 
 
 # GPT detection and rejection settings; this was a enhancement to repeat missed or failed detection and interaction with GPT

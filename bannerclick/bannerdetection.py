@@ -8,6 +8,8 @@ import threading
 from PIL import Image
 import traceback
 import sys
+import pandas
+import os
 from selenium.webdriver.support import expected_conditions as EC
 import bannerclick.config as config
 import logging
@@ -69,7 +71,7 @@ def is_semantically_correct_gpt(el, semantic):
             You are a web scraping assistant. Given the following HTML content, if you think the following HTML element could be semantically related to a {semantic} button (regarding web cookies) return "yes" otherwise return "no".
             html element:
             {button_element}
-            
+
             Return "yes" or "no".
             """.format(semantic=semantic, button_element=button_element)
 
@@ -157,7 +159,7 @@ def find_btns_xpath_gpt(html_content, choice):
             {html_content}
 
             If such elements exist in the above DOM, return their XPath (separated by | if multiple), otherwise, return "not found" and nothing else.
-            
+
             (if you found the xpaths of the elements:
             your response is possibly correct if its text contains something similar to: "Save and Exit", "Submit preferences", "Reject All", "Accept selected" or any thing semantically related
             your response is possibly wrong if its text contains something similar to: "Accept All", "Manage Settings", "More Information", "Return" or any thing semantically related)
@@ -165,12 +167,12 @@ def find_btns_xpath_gpt(html_content, choice):
         else:
             prompt = """
             You are a web scraping assistant, please ANSWER following query. Below is the HTML DOM of a cookie banner. Identify the XPath of buttons that either "refuse" or "reject all" non-essential cookies, leading to the closing of the banner. Avoid selecting buttons related to "accepting all" cookies or "settings" of cookie banners.
-    
+
             HTML:
             {html_content}
 
             If you find such buttons in the DOM, return their XPath (separated by | if multiple). If not, return "not found" and nothing else.
-            
+
             (if you found the xpaths of the elements:
             your response is possibly correct if its text contains something similar to: "reject", "disagree", "do not agree", "continue without accept", "only essential" or any thing semantically related
             your response is possibly wrong if its text contains something similar to:  "Accept All", "Manage Settings", "More Information", "dismiss", "Adjust", "ok" or cross sign (X) resulting in implicitly accepting the banner or any thing semantically related)
@@ -506,7 +508,7 @@ def init(headless=HEADLESS, input_file=None, num_browsers=NUM_BROWSERS, num_repe
     create_data_dirs()
     if os.path.isfile(file):
         domains = file_to_list(file)
-    # set_database(v_db, b_db, h_db)
+    set_database(v_db, b_db, h_db)
 
     if input_file:
         file = input_file
@@ -791,7 +793,7 @@ def detect_banners(data):  # return banners of the current running url
     config.driver = driver
     banners = []
     banner_info = []
-    csv_file ='banner_data.csv' 
+    csv_file ='banner_data.csv'
 
     inc_counter()
     try:
@@ -836,20 +838,20 @@ def detect_banners(data):  # return banners of the current running url
                 this_status = 3
                 data.status = this_status
         # Extract banner information
-#------------------------------------------------------------------------------------        
+#------------------------------------------------------------------------------------
 
-        # for banner in banners:   
+        # for banner in banners:
         #     banner_item = {
         #         "domain": this_domain,
         #         "has_banner": "Yes",
         #         "banner_text": "",
         #         "buttons": [],
         #         "links": []
-        #     } 
+        #     }
             # banner_info.append(banner_item)
         # if not banner_info:
         #     banner_info.append(banner_item)
-        #     
+        #
         # csv_headers = ["domain", "has_banner", "banner_text", "buttons", "links"]
         # Write to CSV file
         # if not banners:
@@ -862,11 +864,11 @@ def detect_banners(data):  # return banners of the current running url
         #     })
 #         with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
 #             writer = csv.DictWriter(file, fieldnames=csv_headers)
-#             
+#
 #             # Write header only if file is empty
 #             if file.tell() == 0:
 #                 writer.writeheader()
-# 
+#
 #             writer.writerows(banner_info)
         logging.getLogger("openwpm").info(f"No. of Banners in 1st layer: {len(banners)}")
 
@@ -879,7 +881,7 @@ def detect_banners(data):  # return banners of the current running url
         this_status = -1
         data.status = this_status
 
-    
+
     return banners
 
 
@@ -888,7 +890,7 @@ def Second_layer_detect_banners(data):  # return banners of the current running 
     config.driver = driver
     banners = []
     banner_info = []
-    csv_file ='second_layer_banner_data.csv' 
+    csv_file ='second_layer_banner_data.csv'
 
     inc_counter()
     try:
@@ -933,20 +935,20 @@ def Second_layer_detect_banners(data):  # return banners of the current running 
                 this_status = 3
                 data.status = this_status
         # Extract banner information
-#------------------------------------------------------------------------------------        
+#------------------------------------------------------------------------------------
 
-#         for banner in banners:   
+#         for banner in banners:
 #             banner_item = {
 #                 "domain": this_domain,
 #                 "has_banner": "Yes",
 #                 "banner_text": "",
 #                 "buttons": [],
 #                 "links": []
-#             } 
+#             }
 #             banner_info.append(banner_item)
 #         if not banner_info:
 #             banner_info.append(banner_item)
-#             
+#
 #         csv_headers = ["domain", "has_banner", "banner_text", "buttons", "links"]
 #         # Write to CSV file
 #         if not banners:
@@ -959,15 +961,15 @@ def Second_layer_detect_banners(data):  # return banners of the current running 
 #             })
 #         with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
 #             writer = csv.DictWriter(file, fieldnames=csv_headers)
-#             
+#
 #             # Write header only if file is empty
 #             if file.tell() == 0:
 #                 writer.writeheader()
-# 
+#
 #             writer.writerows(banner_info)
 #         logging.getLogger("openwpm").info(f"No. of Banners in 2nd layer: {len(banners)}")
-# 
-# 
+#
+#
 #------------------------------------------------------------------------------------
     except Exception as ex:
         with open(log_file, 'a+') as f:
@@ -977,7 +979,7 @@ def Second_layer_detect_banners(data):  # return banners of the current running 
         this_status = -1
         data.status = this_status
 
-    
+
     return banners
 
 
@@ -1484,6 +1486,27 @@ def get_html_short(html):
     html_short = simplify_html(html)
     return html_short
 
+def save_banner_text(this_url,text):
+
+    csv_file = "banner_text.csv"
+
+    # Check if file exists
+    if not os.path.exists(csv_file):
+        # Create empty DataFrame with required columns
+        df = pd.DataFrame(columns=["domains", "text"])
+    else:
+        # Load existing file
+        df = pd.read_csv(csv_file)
+
+    # Example assignments
+    new_domain = this_url
+    new_text = text
+
+    # Append new row
+    df.loc[len(df)] = [new_domain, new_text]
+
+    # Save back to CSV
+    df.to_csv(csv_file, index=False)
 
 def extract_banner_data(banner_item):
     global driver
@@ -1513,6 +1536,7 @@ def extract_banner_data(banner_item):
         banner_data['html_short'] = html_short
         banner_data['is_sub'] = is_sub(banner.text, html)
         banner_data['lang'] = detect_lang(banner.text)
+        save_banner_text(this_url,banner.text)
         if type(banner_item) is tuple:
             if shadow_host is not None:
                 banner_data["shadow_dom"] = True
@@ -1532,10 +1556,39 @@ def extract_banner_data(banner_item):
     return banner_data
 
 
+# def get_data_dicts(banner_data, visit_id):
+#     global this_domain, visit_db, banner_db, html_db, this_index
+#     try:
+#         # visit_id = this_index
+#         banner_id = random.getrandbits(53)
+#         b_row_dict = {'banner_id': banner_id,
+#                       'visit_id': visit_id, 'domain': this_domain}
+#         h_row_dict = {'banner_id': banner_id,
+#                       'visit_id': visit_id, 'domain': this_domain}
+#         b_row_dict.update(banner_data)
+#         h_row_dict['html'] = banner_data["html"]
+#         h_row_dict['html_short'] = banner_data["html_short"]
+#         del b_row_dict['html']
+#         del b_row_dict['html_short']
+#
+#         try:
+#             banner_db.loc[banner_db.shape[0],
+#                           b_row_dict.keys()] = b_row_dict.values()
+#             html_db.loc[html_db.shape[0], h_row_dict.keys()] = h_row_dict.values()
+#         except:
+#             pass
+#     except Exception as ex:
+#         with open(log_file, 'a+') as f:
+#             print("failed to continue extracting banner data for domain: " +
+#                   this_url + " " + ex.__str__(), file=f)
+#             MyExceptionLogger(err=ex, file=f)
+#     finally:
+#         return b_row_dict, h_row_dict
+
+
 def get_data_dicts(banner_data, visit_id):
     global this_domain, visit_db, banner_db, html_db, this_index
     try:
-        # visit_id = this_index
         banner_id = random.getrandbits(53)
         b_row_dict = {'banner_id': banner_id,
                       'visit_id': visit_id, 'domain': this_domain}
@@ -1548,15 +1601,30 @@ def get_data_dicts(banner_data, visit_id):
         del b_row_dict['html_short']
 
         try:
-            banner_db.loc[banner_db.shape[0],
-                          b_row_dict.keys()] = b_row_dict.values()
-            html_db.loc[html_db.shape[0], h_row_dict.keys()] = h_row_dict.values()
-        except:
-            pass
+            # FIX: Ensure columns exist with object dtype before assignment
+            for col in b_row_dict.keys():
+                if col not in banner_db.columns:
+                    banner_db[col] = pd.Series(dtype='object')
+
+            for col in h_row_dict.keys():
+                if col not in html_db.columns:
+                    html_db[col] = pd.Series(dtype='object')
+
+            # Now assign the values
+            banner_db.loc[banner_db.shape[0], list(b_row_dict.keys())] = list(b_row_dict.values())
+            html_db.loc[html_db.shape[0], list(h_row_dict.keys())] = list(h_row_dict.values())
+
+        except Exception as ex:
+            # More specific error logging
+            print(f"Error in DataFrame assignment: {ex}")
+            # Fallback: Use append method which handles dtype better
+            banner_db = pd.concat([banner_db, pd.DataFrame([b_row_dict])], ignore_index=True)
+            html_db = pd.concat([html_db, pd.DataFrame([h_row_dict])], ignore_index=True)
+
     except Exception as ex:
         with open(log_file, 'a+') as f:
             print("failed to continue extracting banner data for domain: " +
-                  this_url + " " + ex.__str__(), file=f)
+                  this_domain + " " + ex.__str__(), file=f)
             MyExceptionLogger(err=ex, file=f)
     finally:
         return b_row_dict, h_row_dict

@@ -9,6 +9,7 @@ import os
 import time
 import subprocess
 from pathlib import Path
+from bannerclick.bannerdetection import save_database
 
 # ===== STEP 1: SET ENVIRONMENT VARIABLE FIRST =====
 os.environ['MOZ_REMOTE_SETTINGS_DEVTOOLS'] = '1'
@@ -163,8 +164,8 @@ def new_sequence_exe(site, index, browser_index, manager, goal, reset, choice=2)
     def callback(visit_id: int, success: bool, val: str = site, index: int = index, goal = goal, choice = choice) -> None:
         manager.logger.warning(
             f"""
-            CommandSequence for 
-            Site: {val} 
+            CommandSequence for
+            Site: {val}
             Visit ID: {visit_id}
             ran {'successfully' if success else 'unsuccessfully'}
             rank: {index}
@@ -278,8 +279,8 @@ try:
                 def callback(visit_id: int, success: bool, val: str = site, index: int = index) -> None:
                     manager.logger.warning(
                         f"""
-                        CommandSequence for 
-                        Site: {val} 
+                        CommandSequence for
+                        Site: {val}
                         Visit ID: {visit_id}
                         ran {'successfully' if success else 'unsuccessfully'}
                         rank: {index}
@@ -406,6 +407,7 @@ try:
                             )
                             manager.execute_command_sequence(command_sequence)
 
+
                     else:
                         # Parallelize sites over all number of browsers set above.
                         command_sequence = CommandSequence(
@@ -451,6 +453,7 @@ finally:
             dump_profile_index(STATE_RUN_PATH, index, manager, site, dump_profile_cb, save_name)
             store_db(name=save_name)
     print("last finally block to close manager")
+    save_database()
     if TEST_RUN:
         time.sleep(5)
     else:
