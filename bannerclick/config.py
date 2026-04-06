@@ -3,8 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import os
 
-
-COMPLETE_RUN = True     # perform the run for two stateless and stateful phase
+COMPLETE_RUN = False    # perform the run for two stateless and stateful phase
 STATELESS_PHASE = True
 
 TEST_RUN = False
@@ -16,7 +15,7 @@ REVERSE = False
 START_OVER = True     # if true start from the beginning of the list, otherwise continue from the switch point
 
 HEADLESS = True
-STATELESS = False   # reset: true -> stateless otherwise stateful. reset happens after the crawl.
+STATELESS = True   # reset: true -> stateless otherwise stateful. reset happens after the crawl.
 STATFUL_COOKIE = not STATELESS
 SLEEP_AFTER_INTERACTION = False         # enable to initiate the sleep after interaction (not after loading the page)
 WAITANYWAY = True
@@ -33,7 +32,7 @@ SUB_DETECTION = True
 SCREENSHOT = True     # take screenshot
 NOBANNER_SC = True      # store screenshot of websites with no banner in another folder
 SAVE_HTML = True       # save HTML of the banner in "htmls" table
-SAVE_BODY = True       # save HTML of the body in "visits" table
+SAVE_BODY = False      # save HTML of the body in "visits" table
 # using chrome as the browser, available just for Banner Detection module (Not for OpenWPM)
 CHROME = False         # use Chrome browser; this was for partitioned cookies measurement
 GET_COOKIES = CHROME
@@ -53,13 +52,12 @@ GPC_signal = False             # enabling GPC signal
 OFF_CACHING = True        # disabling caching
 TIERED300 = False       # use Tranco tiered 300 list
 RETRY_NUMBER = -1        # number of retry for banner detection
-HTTP_INSTRUMENT = True      # enabling recording HTTP requests and responses
+HTTP_INSTRUMENT = False      # enabling recording HTTP requests and responses
 JS_INSTRUMENT = True       # enabling recording JS events
 COOKIE_INSTRUMENT = True    # enabling recording cookies
-NAV_INSTRUMENT = True     # enabling recording navigation events
-DNS_INSTRUMENT = True      # enabling recording navigation events
-
-
+NAV_INSTRUMENT = False     # enabling recording navigation events
+DNS_INSTRUMENT = False      # enabling recording navigation events
+BOT_MITIGATION = True # if set to true - makes browser follow - bot_mitigation function 
 # GPT detection and rejection settings; this was a enhancement to repeat missed or failed detection and interaction with GPT
 GPT_ENABLE = False
 GPT_DETECTION = False
@@ -69,9 +67,10 @@ API_KEY = "X_YOUR_API_KEY_X"   # GPT API key
 
 
 START_POINT = 0                      # the index of the first website to start from in the target list
-STEP_SIZE = 400                    # the number of websites to crawl started from the start point
+STEP_SIZE =  3400   
+END_INDEX = None
 # STEP_SIZE = 10000
-SWITCH_INDEX = 200                  # the index of the website to switch from stateful to stateless
+SWITCH_INDEX = 10                  # the index of the website to switch from stateful to stateless
 URL_MODE = 1     # prepending: 1. https, 2. http
 NUM_BROWSERS = 1               # number of browsers to run in parallel
 # TIME_OUT = 60     # OpenWPM timeout = TIME_OUT*11, Selenium timeout = TIME_OUT
@@ -79,18 +78,15 @@ TIME_OUT = 60*2     # OpenWPM timeout = TIME_OUT*11, Selenium timeout = TIME_OUT
 # SLEEP_TIME = 1  # the amount of time waits after loading the website
 SLEEP_TIME = 60         # the amount of time waits after loading the website
 TEST_MODE_SLEEP = 0      # used for debugging
-ATTEMPTS = 1       # number of new try for finding banner
-ATTEMPT_STEP = 3      # time to wait before trying again
+ATTEMPTS = 9       # number of new try for finding banner
+ATTEMPT_STEP = 10      # time to wait before trying again
 CHOICE = 1     # or interact_mode: 0. no interaction 1.accept 2.reject
-
-
 
 # Site rank offsets for accept and reject scans
 OFFSET_ACCEPT = 10_000_000
 OFFSET_REJECT = 20_000_000
 
 RUN_SUFFIX = "_reload"
-
 
 verbose = "--SP"+str(START_POINT)
 # verbose = "--tranco-top" + str(STEP_SIZE) +"--run"
@@ -111,7 +107,6 @@ verbose = "--SP"+str(START_POINT)
 # urls_file = "customSites.txt"
 
 urls_file = "top-1m-old.csv"
-
 
 if TEST_RUN:
     SCREENSHOT = True
@@ -139,7 +134,7 @@ season_dir = "./datadir/" + run_name + "/"
 time_dir = datetime.now().date().__str__() + \
         datetime.now().strftime("--%H-%M-%S").__str__() + verbose
 
-time_dir = "1" + verbose
+# time_dir = "1" + verbose
 
 data_dir = season_dir + time_dir
 

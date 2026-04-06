@@ -14,6 +14,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import bannerclick.config as config
 import logging
 import csv
+from bannerclick.config import data_dir
+from bannerclick.utility.utilityMethods import get_current_domain
 def MyExceptionLogger(err, file):
     # return
     traceback_details = traceback.format_exc()
@@ -806,15 +808,7 @@ def detect_banners(data):  # return banners of the current running url
         this_domain = data.domain
         this_lang = None
         time.sleep(2.5)
-        start_time = datetime.now()
         banners = find_cookie_banners()
-        finish_time = datetime.now()
-        completion_time = finish_time - start_time
-
-        with open(banners_log_file, 'a+') as f:
-            init_str = this_domain + " banner detection finished within: " + str(
-                completion_time.microseconds)
-            print(init_str, file=f)
 
         this_lang = page_lang(driver)
         config.this_lang = this_lang
@@ -823,6 +817,7 @@ def detect_banners(data):  # return banners of the current running url
         if ATTEMPTS:
             for att in range(ATTEMPTS):
                 if banners:
+                    logging.getLogger('openwpm').info(f"data.ttw - {data.ttw}")
                     break
                 time.sleep(ATTEMPT_STEP)
                 if not banners:
@@ -830,6 +825,7 @@ def detect_banners(data):  # return banners of the current running url
                 else:
                     return banners
                 data.ttw = (att + 1) * ATTEMPT_STEP
+                
         if not banners and TRANSLATION:
             # if no banner is found and the language of site is not english then translate the page and check again
             if "en" not in this_lang and is_in_langlist(this_lang):
@@ -837,39 +833,17 @@ def detect_banners(data):  # return banners of the current running url
                 banners = find_cookie_banners(translate=True)
                 this_status = 3
                 data.status = this_status
-        # Extract banner information
-#------------------------------------------------------------------------------------
 
-        # for banner in banners:
-        #     banner_item = {
-        #         "domain": this_domain,
-        #         "has_banner": "Yes",
-        #         "banner_text": "",
-        #         "buttons": [],
-        #         "links": []
-        #     }
-            # banner_info.append(banner_item)
-        # if not banner_info:
-        #     banner_info.append(banner_item)
-        #
-        # csv_headers = ["domain", "has_banner", "banner_text", "buttons", "links"]
-        # Write to CSV file
-        # if not banners:
-        #     banner_info.append({
-        #         "domain": this_domain,
-        #         "has_banner": "No",
-        #         "banner_text": "",
-        #         "buttons": [],
-        #         "links": []
-        #     })
-#         with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
-#             writer = csv.DictWriter(file, fieldnames=csv_headers)
-#
-#             # Write header only if file is empty
-#             if file.tell() == 0:
-#                 writer.writeheader()
-#
-#             writer.writerows(banner_info)
+
+        if banners :
+            start_time = data.start_time 
+            finish_time = datetime.now()
+            completion_time = finish_time - start_time
+            with open(banners_log_file, 'a+') as f:
+                init_str = this_domain + " banner detection finished within: " + str(
+                    completion_time.total_seconds())
+                print(init_str, file=f)
+            
         logging.getLogger("openwpm").info(f"No. of Banners in 1st layer: {len(banners)}")
 
 #------------------------------------------------------------------------------------
@@ -880,7 +854,6 @@ def detect_banners(data):  # return banners of the current running url
             # MyExceptionLogger(err=ex, file=f)
         this_status = -1
         data.status = this_status
-
 
     return banners
 
@@ -1486,24 +1459,25 @@ def get_html_short(html):
     html_short = simplify_html(html)
     return html_short
 
-def save_banner_text(this_url,text):
+def save_banner_details(domain,text,html):
 
-    csv_file = "banner_text.csv"
+    csv_file = data_dir + "/banner_details.csv"
 
     # Check if file exists
     if not os.path.exists(csv_file):
         # Create empty DataFrame with required columns
-        df = pd.DataFrame(columns=["domains", "text"])
+        df = pd.DataFrame(columns=["domains", "text", "html"])
     else:
         # Load existing file
         df = pd.read_csv(csv_file)
 
     # Example assignments
-    new_domain = this_url
+    new_domain = domain
     new_text = text
+    new_html = html
 
     # Append new row
-    df.loc[len(df)] = [new_domain, new_text]
+    df.loc[len(df)] = [new_domain, new_text, new_html]
 
     # Save back to CSV
     df.to_csv(csv_file, index=False)
@@ -1536,7 +1510,10 @@ def extract_banner_data(banner_item):
         banner_data['html_short'] = html_short
         banner_data['is_sub'] = is_sub(banner.text, html)
         banner_data['lang'] = detect_lang(banner.text)
-        save_banner_text(this_url,banner.text)
+        try : 
+            save_banner_details(get_current_domain(driver, this_url),banner.text,html)
+        except Exception as e :
+            logging.getLogger('openwpm').info(f'Error in save_banner details - {e}')
         if type(banner_item) is tuple:
             if shadow_host is not None:
                 banner_data["shadow_dom"] = True
@@ -1585,6 +1562,49 @@ def extract_banner_data(banner_item):
 #     finally:
 #         return b_row_dict, h_row_dict
 
+# 
+# def get_data_dicts(banner_data, visit_id):
+#     global this_domain, visit_db, banner_db, html_db, this_index
+#     try:
+#         banner_id = random.getrandbits(53)
+#         b_row_dict = {'banner_id': banner_id,
+#                       'visit_id': visit_id, 'domain': this_domain}
+#         h_row_dict = {'banner_id': banner_id,
+#                       'visit_id': visit_id, 'domain': this_domain}
+#         b_row_dict.update(banner_data)
+#         h_row_dict['html'] = banner_data["html"]
+#         h_row_dict['html_short'] = banner_data["html_short"]
+#         del b_row_dict['html']
+#         del b_row_dict['html_short']
+# 
+#         try:
+#             # FIX: Ensure columns exist with object dtype before assignment
+#             for col in b_row_dict.keys():
+#                 if col not in banner_db.columns:
+#                     banner_db[col] = pd.Series(dtype='object')
+# 
+#             for col in h_row_dict.keys():
+#                 if col not in html_db.columns:
+#                     html_db[col] = pd.Series(dtype='object')
+# 
+#             # Now assign the values
+#             banner_db.loc[banner_db.shape[0], list(b_row_dict.keys())] = list(b_row_dict.values())
+#             html_db.loc[html_db.shape[0], list(h_row_dict.keys())] = list(h_row_dict.values())
+# 
+#         except Exception as ex:
+#             # More specific error logging
+#             print(f"Error in DataFrame assignment: {ex}")
+#             # Fallback: Use append method which handles dtype better
+#             banner_db = pd.concat([banner_db, pd.DataFrame([b_row_dict])], ignore_index=True)
+#             html_db = pd.concat([html_db, pd.DataFrame([h_row_dict])], ignore_index=True)
+# 
+#     except Exception as ex:
+#         with open(log_file, 'a+') as f:
+#             print("failed to continue extracting banner data for domain: " +
+#                   this_domain + " " + ex.__str__(), file=f)
+#             MyExceptionLogger(err=ex, file=f)
+#     finally:
+#         return b_row_dict, h_row_dict
 
 def get_data_dicts(banner_data, visit_id):
     global this_domain, visit_db, banner_db, html_db, this_index
@@ -1595,36 +1615,15 @@ def get_data_dicts(banner_data, visit_id):
         h_row_dict = {'banner_id': banner_id,
                       'visit_id': visit_id, 'domain': this_domain}
         b_row_dict.update(banner_data)
-        h_row_dict['html'] = banner_data["html"]
+        h_row_dict['html']       = banner_data["html"]
         h_row_dict['html_short'] = banner_data["html_short"]
         del b_row_dict['html']
         del b_row_dict['html_short']
 
-        try:
-            # FIX: Ensure columns exist with object dtype before assignment
-            for col in b_row_dict.keys():
-                if col not in banner_db.columns:
-                    banner_db[col] = pd.Series(dtype='object')
-
-            for col in h_row_dict.keys():
-                if col not in html_db.columns:
-                    html_db[col] = pd.Series(dtype='object')
-
-            # Now assign the values
-            banner_db.loc[banner_db.shape[0], list(b_row_dict.keys())] = list(b_row_dict.values())
-            html_db.loc[html_db.shape[0], list(h_row_dict.keys())] = list(h_row_dict.values())
-
-        except Exception as ex:
-            # More specific error logging
-            print(f"Error in DataFrame assignment: {ex}")
-            # Fallback: Use append method which handles dtype better
-            banner_db = pd.concat([banner_db, pd.DataFrame([b_row_dict])], ignore_index=True)
-            html_db = pd.concat([html_db, pd.DataFrame([h_row_dict])], ignore_index=True)
-
     except Exception as ex:
         with open(log_file, 'a+') as f:
             print("failed to continue extracting banner data for domain: " +
-                  this_domain + " " + ex.__str__(), file=f)
+                  this_url + " " + ex.__str__(), file=f)
             MyExceptionLogger(err=ex, file=f)
     finally:
         return b_row_dict, h_row_dict

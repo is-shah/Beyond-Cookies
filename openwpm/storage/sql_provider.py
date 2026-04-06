@@ -245,7 +245,7 @@ class BCSQLiteStorageProvider(StructuredStorageProvider):
         table: TableName, data: Dict[str, Any]
     ) -> Tuple[str, List[Any]]:
         """Generate a SQL query from `record`"""
-        statement = "INSERT INTO %s (" % table
+        statement = "INSERT OR IGNORE INTO %s (" % table
         value_str = "VALUES ("
         values = list()
         first = True

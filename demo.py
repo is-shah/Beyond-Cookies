@@ -150,7 +150,7 @@ if REVERSE:
     step = -1
     SWITCH_INDEX -= 1
 else:
-    end = len(sites)
+    end = END_INDEX
     step = 1
 
 manager.logger.info(
@@ -213,7 +213,7 @@ def handle_site_task(site, index, browser_index, manager):
 
 
 def stateless_phase(site, index, browser_index, manager):
-    new_sequence_exe(site, index, browser_index, manager, "stateless_phase", False)
+    new_sequence_exe(site, index, browser_index, manager, "stateless_phase", True) # have chnage dits flag here ------ me - ishan shah 
     # new_sequence_exe(site, index, browser_index, manager, "stateless_phase_asap", True)
     browser_free[browser_index] = True
     if TASK_COUNT_SLEEP and not TEST_RUN:
@@ -349,6 +349,7 @@ try:
                             # Wait for the current task to complete before moving to the next iteration
                             # future.result()
                         elif STATELESS_PHASE:
+                            logging.getLogger("openwpm").info("STATELESS_PAHSE STARTED ")
                             future = executor.submit(
                                 stateless_phase,
                                 site,
@@ -356,6 +357,7 @@ try:
                                 browser_index,
                                 manager,
                             )
+                            
                             # future = executor.submit(
                             #     sc_run,
                             #     site,
@@ -386,6 +388,7 @@ try:
                         else:
                             # manager.logger.error(
                             #     f"rejecting the banner {site}, {index} ")
+                            logging.getLogger("openwpm").info("-------------------------------####_---------------------")
                             goal = "stateful_phase"
                             command_sequence = CommandSequence(
                                 url=site,
@@ -410,6 +413,7 @@ try:
 
                     else:
                         # Parallelize sites over all number of browsers set above.
+                        logging.getLogger("openwpm").info("######################################123")
                         command_sequence = CommandSequence(
                             site, site_rank=index, callback=callback, reset=False
                         )

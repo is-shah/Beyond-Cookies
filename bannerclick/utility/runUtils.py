@@ -4,6 +4,7 @@ import sqlite3
 import os
 import time
 from typing import List, Tuple, Dict, Optional, Union
+from datetime import datetime, timezone
 import subprocess
 import shutil
 from pathlib import Path
@@ -11,13 +12,13 @@ from openwpm.config import BrowserParams, ManagerParams
 from openwpm.command_sequence import CommandSequence, DumpProfileCommand
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
-
+import csv
+from urllib.parse import urlparse, urljoin
 from openwpm.commands.utils.webdriver_utils import (
     is_displayed,
     scroll_down,
     wait_until_loaded,
 )
-from urllib import parse as urlparse
 import requests
 from selenium.webdriver import Firefox
 from .shared_utils import repeat, read_txt_file, url_to_uniform_domain
@@ -25,6 +26,9 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 import logging
 import random
+from openwpm.commands.browser_commands import bot_mitigation
+from bannerclick.config import data_dir 
+from bannerclick.utility.utilityMethods import get_current_domain
 GENERAL_SELECTORS_URL = "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_general_hide.txt"
 SPECIFIC_SELECTORS_URL = "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_specific_hide.txt"
 SELECTORS_EXCEPTIONS_URL = "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_allowlist_general_hide.txt"
@@ -51,7 +55,25 @@ def scroll_to_bottom(webdriver: Firefox) -> None:
         pass
 
 
+def log_event(webdriver, event_str, url):
+    file_name = data_dir + '/Events.csv'
 
+    # Create file with header if it doesn't exist
+    if not os.path.exists(file_name):
+        with open(file_name, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(["domain", "Event", "Timestamp"])
+
+    # Extract domain
+    domain = get_current_domain(webdriver , url)
+
+    # Timestamp
+    timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+
+    # Append new row
+    with open(file_name, mode='a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow([domain, event_str, timestamp])
 
 def write_to_file(
     s: Union[str, bytes], save_path: Union[Path, str], save_path_suffix: str = ""
@@ -129,7 +151,7 @@ def get_intra_links(webdriver: Firefox, url: str) -> List[WebElement]:
             continue
         if href is None:
             continue
-        full_href = urlparse.urljoin(url, href)
+        full_href = urljoin(url, href)
         if not full_href.startswith("http"):
             continue
         if url_to_uniform_domain(full_href) == ps1:
@@ -162,12 +184,15 @@ def browse(
             )
             if link is None:
                 continue
-            click(link, webdriver)
+            try :  
+                click(link, webdriver)
+                Event = f"Inner_Page_{i}"
+                log_event(webdriver, Event , website)
+            except :
+                pass 
             wait_until_loaded(webdriver, 4)
             time.sleep(0.5)
-            scroll_to_bottom(webdriver)
-            wait_until_loaded(webdriver, 3)
-            time.sleep(0.5)
+            bot_mitigation(webdriver)
             webdriver.back()
         except Exception:
             pass
@@ -183,7 +208,6 @@ def url_to_uniform_domain(url: str) -> str:
     new_url = re.sub("^\\.", "", new_url)
     new_url = re.sub("/.*", "", new_url)
     return new_url
-
 
 @repeat()
 def click(element: WebElement, webdriver: Firefox, sleep: int = 3) -> None:
@@ -227,7 +251,6 @@ def find_element_by_selector(
     if len(elements) == 0:
         return None
     return elements[0]
-
 
 def get_domains_from_file(target_file_name):
     global STEP_SIZE
@@ -377,6 +400,7 @@ def get_browser_params(num_browsers, headless=True, LOAD_PRO = False, image_para
         # Record JS Web API calls
         browser_param.js_instrument = JS_INSTRUMENT
         # Record the callstack of all WebRequests made
+        browser_param.bot_mitigation = BOT_MITIGATION
         browser_param.callstack_instrument = False
         # Record DNS resolution
         browser_param.dns_instrument = DNS_INSTRUMENT

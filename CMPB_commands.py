@@ -1,9 +1,11 @@
+from urllib.parse import urlparse
 import re
 import errno
 import logging
 import os
 import threading
 import time
+import pandas
 from datetime import datetime
 from bannerclick.config import *
 import bannerclick.config as config
@@ -25,7 +27,7 @@ from bannerclick.config import log_file, MOBILE_AGENT, TEST_RUN, RUN_SUFFIX
 from bannerclick.bannerdetection import MyExceptionLogger
 from detect_links import filter_links , link_segregation
 from selenium.common.exceptions import ElementNotInteractableException, StaleElementReferenceException
-from bannerclick.utility.runUtils import browse
+from bannerclick.utility.runUtils import browse , log_event
 
 
 def init(headless, input_file, num_browsers, num_repetitions):
@@ -197,23 +199,6 @@ class CMPBCommand(BaseCommand):
         elif option == 2:
             bc.interact_with_banners(Data, choice=2)
             time.sleep(10)
-        #     if config.SETTINGS_BUTTON_AVAILABLE:
-        #         bc.interact_with_banners(Data, choice=3)
-        #         logging.getLogger('openwpm').info("settings button clicked")
-        #         WebDriverWait(config.driver, 3).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        #
-        #     # Make sure 'banners' is defined somewhere
-        #     for banner_item in banners:  # banners needs to be defined
-        #         bc.remove_banner(config.driver, banner_item)
-        #
-        #     second_layer_banners = bc.Second_layer_detect_banner(Data)
-        #     logging.getLogger("openwpm").info("Screenshot for 2nd layer is started")  # Fixed typo
-        #     bc.take_banner_sc(second_layer_banners, Data)
-        #     config.SETTINGS_BUTTON_AVAILABLE = False
-        #     flag = 1
-        #     self.workflow(Data, flag)
-        #
-        # # Fixed indentation and line break
         for key, val in Data.btn_status.items():
             logging.getLogger("openwpm").info(f"{key}:{val}")
 
@@ -225,14 +210,12 @@ class CMPBCommand(BaseCommand):
         manager_params: ManagerParams,
         extension_socket: ClientSocket,
     ) -> None:
-        try:
-            # if "https://www.tribunnews.com" == self.url:
-            #     i = 0
-            # TODO: Added by Me
-
-
-            # webdriver = bd.create_driver_session(webdriver.session_id, webdriver.command_executor._url)
-            # webdriver = bd.set_webdriver()
+        parser = urlparse(self.url)
+        domain_name = parser.netloc
+        track_dir = data_dir + "/track/"
+        os.makedirs(track_dir, exist_ok=True)
+        log_file = track_dir + "/error_trace.log"
+        try :
             error_flag = False
             try:
                 print("INSIDE CMPB")
@@ -265,7 +248,9 @@ class CMPBCommand(BaseCommand):
                     error_flag = True
                     exception = E
             WebDriverWait(webdriver, 5).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            time.sleep(30)
+            # time.sleep(30)
+            # screenshot_path = os.path.join(track_dir,f"{domain_name}_after_30sec.png")
+            # webdriver.save_screenshot(screenshot_path)
             #home page
             bc.take_current_page_sc(suffix="_home_page")
 
@@ -285,8 +270,8 @@ class CMPBCommand(BaseCommand):
                     except:
                         pass
                     Data.start_time = datetime.now()
-                    if browser_params.bot_mitigation:
-                        bot_mitigation(webdriver)
+                    # if browser_params.bot_mitigation:
+                    #     bot_mitigation(webdriver)
                     # current_url = webdriver.current_url
 
                     # Don't run banner detection if choice is 0
@@ -300,10 +285,12 @@ class CMPBCommand(BaseCommand):
 
                     if not error_flag:
                         banners = []
-                        time.sleep(60)
+                        # time.sleep(60)
+                        # screenshot_path = os.path.join(track_dir,f"{domain_name}_after_90sec.png")
+                        # webdriver.save_screenshot(screenshot_path)
                         if self.choice:
                             banners = bc.run_banner_detection(Data)
-                            logging.getLogger("openwpm").info(f"Banner Detection Process Done at {datetime.now()}")
+                            logging.getLogger('openwpm').info(f'No of banners : {len(banners)}')
                             bc.take_page_sc(Data)
 
                         if len(banners)>0 :
@@ -313,9 +300,10 @@ class CMPBCommand(BaseCommand):
                             # workflow
                             logging.getLogger("openwpm").info("--------------######------------------")
                             self.workflow(Data,option=2)
-
                             time.sleep(10)
                             webdriver.refresh()
+                            Event = "reload"
+                            log_event(webdriver,Event,self.url)
                             logging.getLogger("openwpm").info("Page Refresh Done")
                             time.sleep(5)
                             browse(self.url,webdriver,num_links=3,sleep=1,seed=42)
@@ -329,7 +317,10 @@ class CMPBCommand(BaseCommand):
                     else:
                         bc.take_page_sc(Data)
                     Data.sql_addr = manager_params.storage_controller_address
-                    bc.set_data_in_db_error(Data)
+                    try : 
+                        bc.set_data_in_db_error(Data)
+                    except Exception as e:
+                        logging.getLogger("openwpm").info(f"Error is here - {e}")
 
                     if TEST_RUN:
                         time.sleep(5)
