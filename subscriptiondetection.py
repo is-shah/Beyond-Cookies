@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup as bs
 with_sub = {}
 
 money_sign = ["€", "$", "£", "¥", "₣", "₹"]  # £ ¥ ₣ ₹
-money_abv = ["EUR", "USD", "CHF", "GBP", "BRL", "CNY", "ZAR", "R\$"]  # all VP, japanese , "Rs", "AUD"
+money_abv = ["EUR", "USD", "CHF", "GBP", "BRL", "CNY", "ZAR", r"R\$"]  # all VP, japanese , "Rs", "AUD"
 money_word = ["Dollar", "Euro", "Rupee", "dollar", "euro", "rupee"]
 #     money_sign = ["$"]
 words = ["abo", "abonnent", "abbonamento", "abonnieren", "abonne", "abonné", "freechoice", "subscribe", "subscription",
@@ -93,7 +93,7 @@ def sub_detection(text, html):
                         return_tuple = (word_list, text)
                         return return_tuple
             for ma in money_abv:
-                regex = '\d+[\.,]\d+\s*{0}|\d+\s*{0}|\s{0}\s*\d+[\.,]\d+|\s{0}\s*\d+'.format(ma)
+                regex = r'\d+[\.,]\d+\s*{0}|\d+\s*{0}|\s{0}\s*\d+[\.,]\d+|\s{0}\s*\d+'.format(ma)
                 #                 regex = '{0}'.format(ma)
                 regexp = re.compile(regex)  # for 22.22$ or $22.22 22$   note: U+2009 is unicode for "thin space"
                 b = regexp.search(text)
@@ -103,7 +103,7 @@ def sub_detection(text, html):
                         return_tuple = (word_list, text)
                         return return_tuple
             for mw in money_word:
-                regex = '\d+[\.,]\d+\s*{0}|\d+\s*{0}|\s{0}\s*\d+[\.,]\d+|\s{0}\s*\d+'.format(mw)
+                regex = r'\d+[\.,]\d+\s*{0}|\d+\s*{0}|\s{0}\s*\d+[\.,]\d+|\s{0}\s*\d+'.format(mw)
                 #                 regex = '{0}'.format(mw)
                 #                 print(regex)
                 regexp = re.compile(regex)  # for 22.22$ or $22.22 22$   note: U+2009 is unicode for "thin space"
