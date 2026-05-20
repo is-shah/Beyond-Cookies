@@ -10,6 +10,7 @@
   "RTCPeerConnection",
   "RTCPeerConnectionIceEvent",
   "HTMLCanvasElement",
+  "Storage",
   {
     "CanvasRenderingContext2D": {
       "propertiesToInstrument": ["getImageData", "measureText", "isPointInPath"],
