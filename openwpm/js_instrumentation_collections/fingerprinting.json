@@ -13,7 +13,6 @@
   "Storage",
   {
     "CanvasRenderingContext2D": {
-      "propertiesToInstrument": ["getImageData", "measureText", "isPointInPath"],
       "excludedProperties": [
         "quadraticCurveTo",
         "lineTo",
