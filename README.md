@@ -59,6 +59,10 @@ Aside from the [configuration](https://github.com/openwpm/OpenWPM/blob/master/do
 ## Fingerprinting Instrumentation :
 All modified fingerprinting instrumentaion is defined as : [_'fingerprinting.json'_](https://github.com/Xclusive-Ishan/ShadowMap/blob/main/openwpm/js_instrumentation_collections/fingerprinting.json) 
 
+## References:
+
+DuckDuckGo Tracker Radar : [Github Repo](https://github.com/duckduckgo/tracker-radar.git)
+
 ## Attribution
 
 If you use our tool in your research, please reference it with the following citations:
