@@ -47,7 +47,7 @@ source ~/.bashrc
 As an example the following command will run the bannerclick custom command using 8 headless browsers with 5 repetitions for each domain in the `Tranco5Nov.csv` file.
 
 ```bash
-python run.py --bannerclick --headless --num-browsers 8 --num-repetitions 5 
+python run.py --bannerclick --headless --num-browsers 1 --num-repetitions 1 
 ```
 By Default it crawls the domains mentioned at give filepath :
 ./bannerclick/input-files/Tranco5Nov.csv
