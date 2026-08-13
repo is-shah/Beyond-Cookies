@@ -18,10 +18,11 @@ without them, browser launches will fail with
 `WebDriverException: Process unexpectedly closed with status 255`.
 
 ### Ubuntu / Debian
-
+```bash
 sudo apt-get update
-sudo apt-get install -y libgtk-3-0 libx11-xcb1 libdbus-glib-1-2 libxt6 libasound2 libpci3 xvfb
 
+sudo apt-get install -y libgtk-3-0 libx11-xcb1 libdbus-glib-1-2 libxt6 libasound2 libpci3 xvfb
+```
 > **Note:** On Ubuntu 24.04+ / Debian 13+, some package names changed to a
 > `t64` suffix (e.g. `libasound2t64`, `libpci3t64`). If `apt-get install`
 > reports a package as not found, retry with `t64` appended, or run
