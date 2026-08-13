@@ -60,7 +60,7 @@ source ~/.bashrc
 
 ## Instruction to start the script :
 
-As an example the following command will run the bannerclick custom command using 1 headless browsers with 1 repetitions for each domain in the `Tranco5Nov.csv` file.
+As an example the following command will run the bannerclick custom command using 1 headless browsers with 1 repetitions for each domain in the `top-1m-old.csv` file.
 
 ```bash
 python run.py --bannerclick --headless --num-browsers 1 --num-repetitions 1 
