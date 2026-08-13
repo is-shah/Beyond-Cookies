@@ -66,9 +66,9 @@ PRUNE_GPT = False
 API_KEY = "X_YOUR_API_KEY_X"   # GPT API key
 
 
-START_POINT = 0                      # the index of the first website to start from in the target list
-STEP_SIZE =  3400   
-END_INDEX = None
+START_POINT = 0          # the index of the first website to start from in the target list
+STEP_SIZE =  100   #pick the domains in batches of steps sie , here say 100 
+END_INDEX = 100    # last index for which a webistes will be counted in for crawl from - *url_file*
 # STEP_SIZE = 10000
 SWITCH_INDEX = 10                  # the index of the website to switch from stateful to stateless
 URL_MODE = 1     # prepending: 1. https, 2. http
