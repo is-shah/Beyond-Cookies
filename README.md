@@ -33,7 +33,7 @@ Next, the `install.sh` script will install all the prerequisites in a separate c
 . To run the install script, run
 
 ```bash
-./install.sh
+bash install.sh
 ```
 
 After running the install script, activate your conda environment by running:
