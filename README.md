@@ -10,6 +10,22 @@ We implemented BannerClick as a [custom command](https://github.com/openwpm/Open
 
 The main pre-requisite for OpenWPM is conda. it is an open-source cross-platform package management tool, and can be installed from https://docs.conda.io/en/latest/miniconda.html.
 
+## System Prerequisites
+
+Before running `install.sh`, install the following system packages. These are
+required by the standalone Firefox binary (`firefox-bin`) used by OpenWPM —
+without them, browser launches will fail with
+`WebDriverException: Process unexpectedly closed with status 255`.
+
+### Ubuntu / Debian
+
+sudo apt-get update
+sudo apt-get install -y libgtk-3-0 libx11-xcb1 libdbus-glib-1-2 libxt6 libasound2 libpci3 xvfb
+
+> **Note:** On Ubuntu 24.04+ / Debian 13+, some package names changed to a
+> `t64` suffix (e.g. `libasound2t64`, `libpci3t64`). If `apt-get install`
+> reports a package as not found, retry with `t64` appended, or run
+> `apt search <package-name>` to find the current name for your release.
 
 Next, the `install.sh` script will install all the prerequisites in a separate conda environment named openwpm. 
 
@@ -32,29 +48,29 @@ tar -xvjf firefox-bin.tar.bz2
 ```
 2. Set the `FIREFOX_BINARY` environment variable to point to the extracted Firefox binary:
 ```bash
-export FIREFOX_BINARY=/path/to/firefox-bin/firefox-bin
+export FIREFOX_BINARY="$(pwd)/firefox-bin/firefox-bin"
 ```
-> **Note:** Replace `/path/to/ShadowMap` with the absolute path to your project directory.
 
 3. To make this environment variable persistent across terminal sessions, append it to your `~/.bashrc` file and reload your shell:
 ```bash
-echo 'export FIREFOX_BINARY=/path/to/ShadowMap/firefox-bin/firefox-bin' >> ~/.bashrc
+echo "export FIREFOX_BINARY=$(pwd)/firefox-bin/firefox-bin" >> ~/.bashrc
 source ~/.bashrc
 ```
 
 ## Instruction to start the script :
 
-As an example the following command will run the bannerclick custom command using 8 headless browsers with 5 repetitions for each domain in the `Tranco5Nov.csv` file.
+As an example the following command will run the bannerclick custom command using 1 headless browsers with 1 repetitions for each domain in the `Tranco5Nov.csv` file.
 
 ```bash
 python run.py --bannerclick --headless --num-browsers 1 --num-repetitions 1 
 ```
 By Default it crawls the domains mentioned at give filepath :
-./bannerclick/input-files/Tranco5Nov.csv
+./bannerclick/input-files/top-1m-old.csv
 
 ## Configuration
 
 Aside from the [configuration](https://github.com/openwpm/OpenWPM/blob/master/docs/Configuration.md) for OpenWPM, there are other parameters that can be modified in [`config.py`](https://github.com/bannerclick/bannerclick/blob/bannerclick_v0.18.0/bannerclick/config.py) to configure BannerClick. Each parameter is documented in the file directly. 
+
 
 ## Fingerprinting Instrumentation :
 All modified fingerprinting instrumentaion is defined as : [_'fingerprinting.json'_](https://github.com/Xclusive-Ishan/ShadowMap/blob/main/openwpm/js_instrumentation_collections/fingerprinting.json) 
