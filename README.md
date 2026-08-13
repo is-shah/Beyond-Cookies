@@ -32,7 +32,7 @@ tar -xvjf firefox-bin.tar.bz2
 ```
 2. Set the `FIREFOX_BINARY` environment variable to point to the extracted Firefox binary:
 ```bash
-export FIREFOX_BINARY=/path/to/ShadowMap/firefox-bin/firefox-bin
+export FIREFOX_BINARY=/path/to/firefox-bin/firefox-bin
 ```
 > **Note:** Replace `/path/to/ShadowMap` with the absolute path to your project directory.
 
