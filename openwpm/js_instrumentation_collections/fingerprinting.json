@@ -135,7 +135,8 @@
         "indexedDB",
         "matchMedia",
         "performance",
-        "screen"
+        "screen",
+        "requestAnimationFrame"
       ]
     }
   },
@@ -156,15 +157,27 @@
     }
   },
   {
-    "Performance": {
-      "propertiesToInstrument": []
-    }
-  },
+  "Performance": {
+    "propertiesToInstrument": [
+      "now",
+      "getEntries",
+      "getEntriesByType",
+      "getEntriesByName",
+      "mark",
+      "measure"
+    ]
+  }
+},
   {
-    "Element": {
-      "propertiesToInstrument": ["getClientRects"]
-    }
-  },
+  "Element": {
+    "propertiesToInstrument": [
+      "getClientRects",
+      "getBoundingClientRect",
+      "offsetWidth",
+      "scrollHeight"
+    ]
+  }
+},
   {
     "BarProp": {
       "propertiesToInstrument": ["visible"]
@@ -225,13 +238,26 @@
     }
   },
   {
-    "BroadcastChannel": {
-      "propertiesToInstrument": ["constructor"]
-    }
-  },
+  "BroadcastChannel": {
+    "propertiesToInstrument": [
+      "constructor",
+      "postMessage"
+    ]
+  }
+},
+{
+  "MessageChannel": {
+    "propertiesToInstrument": ["constructor"]
+  }
+},
+{
+  "Worker": {
+    "propertiesToInstrument": ["constructor"]
+  }
+},
   {
     "window.document.fonts": {
-      "propertiesToInstrument": ["check"]
+      "propertiesToInstrument": ["check","load"]
     }
   },
   {
@@ -240,8 +266,13 @@
     }
   },
   {
-    "KeyboardEvent": {
-      "propertiesToInstrument": ["code", "keyCode"]
-    }
+  "KeyboardEvent": {
+    "propertiesToInstrument": [
+      "code",
+      "keyCode",
+      "key",
+      "location"
+    ]
   }
+}
 ]
