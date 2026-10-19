@@ -6,20 +6,12 @@ import os
 
 df1 = pd.read_csv("REJECT/750k/banner_details.csv")
 
-# df2 = pd.read_csv(
-#     "REJECT/1M/banner_details_2.csv",
-#     skiprows=1,
-#     names=df1.columns
-# )
-
-# df = pd.concat([df1, df2], ignore_index=True)
-
 df = df1.drop_duplicates(subset=["domains"])
 df = df[['domains', 'text']]
 
 cache = {}
 
-output_file = "REJECT/750k/common_domains_only_translated.csv"
+output_file = "subcode_for_analysis/banner_data_translated.csv"
 
 def translate_text(text,index, source="auto", target="en", retries=3):
     if pd.isna(text) or str(text).strip() == "":

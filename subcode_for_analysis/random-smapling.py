@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Input CSV file
-input_file = "common_domains_only_translated.csv"
+input_file = "banner_data_translated.csv"
 
 # Output file
 output_file = "random_100.csv"
