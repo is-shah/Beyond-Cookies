@@ -118,8 +118,7 @@ from openai import OpenAI
 # Load CSV
 df = pd.read_csv('REJECT/250k/common_domains_only_translated.csv')
 
-# Initialize OpenAI client
-client = OpenAI(api_key="KEY")
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 # Target output file
 output_file = "REJECT/250k/output.jsonl"
