@@ -28,6 +28,8 @@ sudo apt-get install -y libgtk-3-0 libx11-xcb1 libdbus-glib-1-2 libxt6 libasound
 > reports a package as not found, retry with `t64` appended, or run
 > `apt search <package-name>` to find the current name for your release.
 
+CPU Architecture Requirements: x86_64 / AMD64
+
 Next, the `install.sh` script will install all the prerequisites in a separate conda environment named openwpm. 
 
 . To run the install script, run
