@@ -64,13 +64,13 @@ source ~/.bashrc
 
 As an example the following command will run the bannerclick custom command using 1 headless browsers with 1 repetitions for each domain in the `top-1m-old.csv` file.
 
+Note : Make sure to create a directory to save firefox-profiles using : mkdir ~/tmp
+
 ```bash
 python run.py --bannerclick --headless --num-browsers 1 --num-repetitions 1 
 ```
 By Default it crawls the domains mentioned at give filepath :
 ./bannerclick/input-files/top-1m-old.csv
-
-Note : Make sure to create a directory to save firefox-profiles using : mkdir ~/tmp
 
 ## Configuration
 
