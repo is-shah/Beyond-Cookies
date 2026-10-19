@@ -70,6 +70,8 @@ python run.py --bannerclick --headless --num-browsers 1 --num-repetitions 1
 By Default it crawls the domains mentioned at give filepath :
 ./bannerclick/input-files/top-1m-old.csv
 
+Note : Make sure to create a directory to save firefox-profiles using : mkdir ~/tmp
+
 ## Configuration
 
 Aside from the [configuration](https://github.com/openwpm/OpenWPM/blob/master/docs/Configuration.md) for OpenWPM, there are other parameters that can be modified in [`config.py`](https://github.com/bannerclick/bannerclick/blob/bannerclick_v0.18.0/bannerclick/config.py) to configure BannerClick. Each parameter is documented in the file directly. 
